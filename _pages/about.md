@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 This page is maintained by [Leonardo de Oliveira Martins](https://leomrtns.github.io). See
-[](https://leomrtns.github.io) for more info about me. 
+[https://leomrtns.github.io](https://leomrtns.github.io) for more info about me. 
 
 
 The first pages were created from [Jupyter noteboooks](https://jupyter.org/) using `R`, `python`, `bash`, and `C` kernels and [ipynb website](https://stephenslab.github.io/ipynb-website).
