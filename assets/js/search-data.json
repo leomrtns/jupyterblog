@@ -73,7 +73,7 @@
   
       ,"page1": {
           "title": "About",
-          "content": "The first pages were created from Jupyter noteboooks using R, python, bash, and C kernels and ipynb website. They started as sandbox for playing with experimental code, before incorporating them into production-level software. . This website is now powered by fastpages 1. . a blogging platform that natively supports Jupyter notebooks in addition to other formats. &#8617; . |",
+          "content": "This page is maintained by Leonardo de Oliveira Martins. See https://leomrtns.github.io for more info about me. . The first pages were created from Jupyter noteboooks using R, python, bash, and C kernels and ipynb website. They started as sandbox for playing with experimental code, before incorporating them into production-level software. This website is now powered by fastpages. .",
           "url": "https://leomrtns.github.io/jupyterblog/about/",
           "relUrl": "/about/",
           "date": ""
