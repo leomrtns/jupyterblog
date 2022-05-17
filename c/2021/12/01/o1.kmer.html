@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>K-mer in biomcmc-lib | Leo Blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="K-mer in biomcmc-lib" />
+<meta name="author" content="Leo Martins" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This notebook contains a few details of how kmers are implemented in the low-level phylogenetic library biomcmc-lib." />
+<meta property="og:description" content="This notebook contains a few details of how kmers are implemented in the low-level phylogenetic library biomcmc-lib." />
+<link rel="canonical" href="https://leomrtns.github.io/jupyterblog/c/2021/12/01/o1.kmer.html" />
+<meta property="og:url" content="https://leomrtns.github.io/jupyterblog/c/2021/12/01/o1.kmer.html" />
+<meta property="og:site_name" content="Leo Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-12-01T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="K-mer in biomcmc-lib" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Leo Martins"},"dateModified":"2021-12-01T00:00:00-06:00","datePublished":"2021-12-01T00:00:00-06:00","description":"This notebook contains a few details of how kmers are implemented in the low-level phylogenetic library biomcmc-lib.","headline":"K-mer in biomcmc-lib","mainEntityOfPage":{"@type":"WebPage","@id":"https://leomrtns.github.io/jupyterblog/c/2021/12/01/o1.kmer.html"},"url":"https://leomrtns.github.io/jupyterblog/c/2021/12/01/o1.kmer.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyterblog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://leomrtns.github.io/jupyterblog/feed.xml" title="Leo Blog" /><link rel="shortcut icon" type="image/x-icon" href="/jupyterblog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyterblog/">Leo Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyterblog/about/">About</a><a class="page-link" href="/jupyterblog/licence/">Licence</a><a class="page-link" href="/jupyterblog/search/">Search</a><a class="page-link" href="/jupyterblog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">K-mer in biomcmc-lib</h1><p class="page-description">This notebook contains a few details of how kmers are implemented in the low-level phylogenetic library biomcmc-lib.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-12-01T00:00:00-06:00" itemprop="datePublished">
+        Dec 1, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">Leo Martins</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyterblog/categories/#C">C</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/leomrtns/jupyterblog/tree/master/_notebooks/2021-12-01-o1.kmer.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/jupyterblog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/leomrtns/jupyterblog/master?filepath=_notebooks%2F2021-12-01-o1.kmer.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyterblog/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/leomrtns/jupyterblog/blob/master/_notebooks/2021-12-01-o1.kmer.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyterblog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Fleomrtns%2Fjupyterblog%2Fblob%2Fmaster%2F_notebooks%2F2021-12-01-o1.kmer.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/jupyterblog/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h1"><a href="#K-mer-in-biomcmc-lib-(2019.11.29)">K-mer in biomcmc-lib (2019.11.29) </a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#1.1-Parameters-of-a-kmer-set">1.1 Parameters of a kmer set </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-12-01-o1.kmer.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="K-mer-in-biomcmc-lib-(2019.11.29)">
+<a class="anchor" href="#K-mer-in-biomcmc-lib-(2019.11.29)" aria-hidden="true"><span class="octicon octicon-link"></span></a>K-mer in biomcmc-lib (2019.11.29)<a class="anchor-link" href="#K-mer-in-biomcmc-lib-(2019.11.29)"> </a>
+</h1>
+<p>This notebook contains a few details of how kmers are implemented in the low-level phylogenetic library <a href="https://github.com/quadram-institute-bioscience/biomcmc-lib">biomcmc-lib</a>. 
+This library is opaque to the user, and contains functions that are common to several projects. 
+The functions discussed here relate to the creation of the k-mers (and their hash values) for a given DNA sequence.</p>
+<p>Please have in mind that these functions are likely to change or at least change names soon — they are general enough to have allowed me to play with kmers, but are too complex for production-level software. 
+Two missing functionalities are:</p>
+<ol>
+<li>inexact (masked) k-mers. </li>
+<li>rolling hashes</li>
+<li>using 32 bits per hash value (64 bits may be overkill)</li>
+<li>homopolymer compression</li>
+<li>fine-grained control over k-mer sizes</li>
+</ol>
+<p>Some code shown here depends on local libraries, which must be linked at compilation time (<code>//%cflags:-lm</code> etc.)</p>
+<h2 id="1.1-Parameters-of-a-kmer-set">
+<a class="anchor" href="#1.1-Parameters-of-a-kmer-set" aria-hidden="true"><span class="octicon octicon-link"></span></a>1.1 Parameters of a kmer set<a class="anchor-link" href="#1.1-Parameters-of-a-kmer-set"> </a>
+</h2>
+<p>Since it may be onerous to scan through the DNA sequence several times, I decided to generate kmers for several choices of <code>k</code> in one pass. 
+The library uses 128 bits to store each kmer, and immediately transforms it into its 64 bits hash value.</p>
+<p>Furthermore there are 3 possible encodings for each base: 1, 2, and 4 bits per base.
+The standard used by most kmer algorithms is equivalent to 2 bits per base (<code>A-&gt;00</code>, <code>C-&gt;01</code>, <code>G-&gt;10</code>, <code>T-&gt;11</code>).
+The other two are a compact, GC-content-like one bit per base(<code>A,T-&gt;0</code>, and <code>C,G-&gt;1</code>), and one common in the phylogenetic likelihood structure, that can accommodate ambiguous characters. 
+For instance, since <code>M</code> represents an amino group (<code>C</code> or <code>A</code>), then we can have <code>A-&gt;0001</code>, <code>C-&gt;0010</code>, <code>M-&gt;0011</code>, and <code>N-&gt;1111</code>.</p>
+<p>The code below is implemented in biomcmc-lib (2019.11.29), and is responsible for selecting the sets of k-mer sizes depending on an integer <code>mode</code> given by the user. 
+This code is subject to change.</p>
+<div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">uint64_t</span> <span class="n">_tbl_mask</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mh">0xffffUL</span><span class="p">,</span> <span class="mh">0xffffffUL</span><span class="p">,</span> <span class="mh">0xffffffffUL</span><span class="p">,</span> <span class="mh">0xffffffffffUL</span><span class="p">,</span> <span class="mh">0xffffffffffffUL</span><span class="p">,</span> <span class="mh">0xffffffffffffUL</span><span class="p">,</span> <span class="mh">0xffffffffffffffffUL</span><span class="p">};</span>
+<span class="k">static</span> <span class="kt">uint8_t</span> <span class="n">_tbl_shift</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>      <span class="mi">48</span><span class="p">,</span>         <span class="mi">40</span><span class="p">,</span>           <span class="mi">32</span><span class="p">,</span>             <span class="mi">24</span><span class="p">,</span>               <span class="mi">16</span><span class="p">,</span>                <span class="mi">8</span><span class="p">,</span>                    <span class="mi">0</span><span class="p">};</span>
+<span class="k">static</span> <span class="kt">uint8_t</span> <span class="n">_tbl_nbyte</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>       <span class="mi">2</span><span class="p">,</span>          <span class="mi">3</span><span class="p">,</span>            <span class="mi">4</span><span class="p">,</span>              <span class="mi">5</span><span class="p">,</span>                <span class="mi">6</span><span class="p">,</span>                <span class="mi">7</span><span class="p">,</span>                    <span class="mi">8</span><span class="p">};</span>
+<span class="k">static</span> <span class="kt">uint32_t</span> <span class="n">_tbl_seed</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mh">0x9040a6</span><span class="p">,</span> <span class="mh">0x10bea992</span><span class="p">,</span>   <span class="mh">0x50edd67d</span><span class="p">,</span>     <span class="mh">0xb05a4f09</span><span class="p">,</span>       <span class="mh">0xf07046c5</span><span class="p">,</span>       <span class="mh">0x9c9445ab</span><span class="p">,</span>           <span class="mh">0xb2500f29</span><span class="p">};</span>
+
+<span class="cm">/* i1[] and i2[] (i.e. elements above to be used on first and second 64bits, respectively */</span>
+<span class="k">static</span> <span class="kt">uint8_t</span> <span class="n">_idx_mode</span><span class="p">[][</span><span class="mi">2</span><span class="p">][</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="c1">// contains list of elements from _tbl above to be used, from 1st and 2nd 64bit blocks</span>
+   <span class="p">{</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">},</span>  
+   <span class="p">{</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">},</span>  
+   <span class="p">{</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">},</span> 
+   <span class="p">{</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">},</span>
+   <span class="p">{</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">},</span>
+   <span class="p">{</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">},</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span> <span class="p">}</span>
+<span class="p">};</span>   
+<span class="k">static</span> <span class="kt">uint8_t</span> <span class="n">_n_idx</span><span class="p">[][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">},</span> <span class="p">{</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">},</span> <span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">},</span> <span class="p">{</span><span class="mi">7</span><span class="p">,</span><span class="mi">0</span><span class="p">},</span> <span class="p">{</span><span class="mi">7</span><span class="p">,</span><span class="mi">4</span><span class="p">}</span> <span class="p">};</span> <span class="c1">// how many elems from _idx_mode[] are used</span>
+
+
+<span class="n">kmer_params</span>
+<span class="nf">new_kmer_params</span> <span class="p">(</span><span class="kt">int</span> <span class="n">mode</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">uint8_t</span>  <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">bases_per_byte</span><span class="p">,</span> <span class="n">_ba_pe_by</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">8</span><span class="p">};</span> <span class="c1">// bases_per_byte is 4 if dense</span>
+  <span class="n">kmer_params</span> <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">kmer_params</span><span class="p">)</span> <span class="n">biomcmc_malloc</span> <span class="p">(</span><span class="k">sizeof</span> <span class="p">(</span><span class="k">struct</span> <span class="nc">kmer_params_struct</span><span class="p">));</span>
+  <span class="n">p</span><span class="o">-&gt;</span><span class="n">ref_counter</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">p</span><span class="o">-&gt;</span><span class="n">hashfunction</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">biomcmc_xxh64</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">dna_in_4_bits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mh">0xff</span><span class="p">)</span> <span class="n">initialize_dna_to_bit_tables</span> <span class="p">();</span> <span class="c1">// run once per program</span>
+  <span class="n">p</span><span class="o">-&gt;</span><span class="n">kmer_class_mode</span> <span class="o">=</span> <span class="n">mode</span><span class="p">;</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// map each choice to a set of kmers and bitstring encoding (row relates to _idx_mode[] above)</span>
+    <span class="k">case</span> <span class="mi">0</span><span class="o">:</span>  <span class="n">row</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">1</span><span class="o">:</span>  <span class="n">row</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">2</span><span class="o">:</span>  <span class="n">row</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">3</span><span class="o">:</span>
+    <span class="k">default</span><span class="o">:</span> <span class="n">row</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">4</span><span class="o">:</span>  <span class="n">row</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">5</span><span class="o">:</span>  <span class="n">row</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+  <span class="p">};</span>
+  <span class="n">bases_per_byte</span> <span class="o">=</span> <span class="n">_ba_pe_by</span><span class="p">[</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">dense</span><span class="p">];</span>
+
+  <span class="n">p</span><span class="o">-&gt;</span><span class="n">n1</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="n">_n_idx</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">0</span><span class="p">];</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">n2</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="p">)</span> <span class="n">_n_idx</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">1</span><span class="p">];</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">_idx_mode</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">mask1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_mask</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">shift1</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_shift</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">seed</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_seed</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">nbytes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_nbyte</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_nbyte</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">bases_per_byte</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">n2</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">_idx_mode</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">mask2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_mask</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">shift2</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_shift</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">seed</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">_tbl_seed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mh">0x420314a1d</span><span class="p">;</span> <span class="c1">// very noise, much random</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">nbytes</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tbl_nbyte</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">8</span><span class="p">;</span>
+    <span class="n">p</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">_tbl_nbyte</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mi">8</span><span class="p">)</span> <span class="o">*</span> <span class="n">bases_per_byte</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>(out of curiosity, Liquid cannot handle the consecutive curly braces (<a href="https://github.com/Shopify/liquid/issues/927">https://github.com/Shopify/liquid/issues/927</a>) thus I need to separate as in <code>{ {</code>)</p>
+<p>The small program below prints the resulting set of parameters for each choice of <code>mode</code>.
+Notice that the code must be linked to the <code>libbiomcmc.a</code> local library (some programs, like <a href="https://bitbucket.org/leomrtns/guenomu/">guenomu</a> still install a global version of this library, but newer programs should use it locally, to avoid version conflicts and since it's smaller than one MB...)</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-c"><pre><span></span><span class="c1">//%cflags:-lm</span>
+<span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/biomcmc-lib/lib</span>
+<span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build/biomcmc-lib/lib</span>
+<span class="c1">//%cflags: /usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build/biomcmc-lib/lib/.libs/libbiomcmc.a</span>
+<span class="cp">#include</span> <span class="cpf">&lt;biomcmc.h&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span> <span class="p">(){</span>
+    <span class="kt">uint8_t</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">kmer_params</span> <span class="n">kp</span> <span class="o">=</span> <span class="n">new_kmer_params</span> <span class="p">(</span><span class="n">j</span><span class="p">);</span>
+        <span class="n">printf</span> <span class="p">(</span><span class="s">"&lt;&lt;%d&gt;&gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">j</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">kp</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s"> %3d %3d &lt; 1 &gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">nbytes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">kp</span><span class="o">-&gt;</span><span class="n">n2</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s"> %3d %3d &lt; 2 &gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">nbytes</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">],</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">size</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">kp</span><span class="o">-&gt;</span><span class="n">n1</span><span class="p">]);</span>
+        <span class="n">del_kmer_params</span> <span class="p">(</span><span class="n">kp</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;&lt;0&gt;&gt;
+	   4  16 &lt; 1 &gt;
+	   8  32 &lt; 1 &gt;
+&lt;&lt;1&gt;&gt;
+	   2   8 &lt; 1 &gt;
+	   4  16 &lt; 1 &gt;
+	   6  24 &lt; 1 &gt;
+	   8  32 &lt; 1 &gt;
+	  12  48 &lt; 2 &gt;
+	  16  64 &lt; 2 &gt;
+&lt;&lt;2&gt;&gt;
+	   2   4 &lt; 1 &gt;
+	   3   6 &lt; 1 &gt;
+	   4   8 &lt; 1 &gt;
+	   6  12 &lt; 1 &gt;
+	   8  16 &lt; 1 &gt;
+	  10  20 &lt; 2 &gt;
+	  12  24 &lt; 2 &gt;
+	  16  32 &lt; 2 &gt;
+&lt;&lt;3&gt;&gt;
+	   2   8 &lt; 1 &gt;
+	   3  12 &lt; 1 &gt;
+	   4  16 &lt; 1 &gt;
+	   5  20 &lt; 1 &gt;
+	   6  24 &lt; 1 &gt;
+	   7  28 &lt; 1 &gt;
+	   8  32 &lt; 1 &gt;
+&lt;&lt;4&gt;&gt;
+	   2   4 &lt; 1 &gt;
+	   3   6 &lt; 1 &gt;
+	   4   8 &lt; 1 &gt;
+	   5  10 &lt; 1 &gt;
+	   6  12 &lt; 1 &gt;
+	   7  14 &lt; 1 &gt;
+	   8  16 &lt; 1 &gt;
+	  10  20 &lt; 2 &gt;
+	  11  22 &lt; 2 &gt;
+	  12  24 &lt; 2 &gt;
+	  16  32 &lt; 2 &gt;
+&lt;&lt;5&gt;&gt;
+	   4  32 &lt; 1 &gt;
+	   8  64 &lt; 1 &gt;
+	  12  96 &lt; 2 &gt;
+	  16 128 &lt; 2 &gt;
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>biomcmc-lib commit: <a href="https://github.com/quadram-institute-bioscience/biomcmc-lib/commit/5975331ef88d1c4ec9aef9599fb6348905d289c7">5975331</a></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="leomrtns/jupyterblog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/jupyterblog/c/2021/12/01/o1.kmer.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyterblog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyterblog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyterblog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Notes on Evolutionary Computational Biology and Bioinformatics</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

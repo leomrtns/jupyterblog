@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>kalign3 as a library and colour printing | Leo Blog</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="kalign3 as a library and colour printing" />
+<meta name="author" content="Leo Martins" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="How the multiple sequence alignment kalign3 is implemented in the low-level phylogenetic library biomcmc-lib, and how to use colours in C." />
+<meta property="og:description" content="How the multiple sequence alignment kalign3 is implemented in the low-level phylogenetic library biomcmc-lib, and how to use colours in C." />
+<link rel="canonical" href="https://leomrtns.github.io/jupyterblog/c/2022/03/01/o4.kalign3.html" />
+<meta property="og:url" content="https://leomrtns.github.io/jupyterblog/c/2022/03/01/o4.kalign3.html" />
+<meta property="og:site_name" content="Leo Blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-01T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="kalign3 as a library and colour printing" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Leo Martins"},"dateModified":"2022-03-01T00:00:00-06:00","datePublished":"2022-03-01T00:00:00-06:00","description":"How the multiple sequence alignment kalign3 is implemented in the low-level phylogenetic library biomcmc-lib, and how to use colours in C.","headline":"kalign3 as a library and colour printing","mainEntityOfPage":{"@type":"WebPage","@id":"https://leomrtns.github.io/jupyterblog/c/2022/03/01/o4.kalign3.html"},"url":"https://leomrtns.github.io/jupyterblog/c/2022/03/01/o4.kalign3.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyterblog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://leomrtns.github.io/jupyterblog/feed.xml" title="Leo Blog" /><link rel="shortcut icon" type="image/x-icon" href="/jupyterblog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyterblog/">Leo Blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyterblog/about/">About</a><a class="page-link" href="/jupyterblog/licence/">Licence</a><a class="page-link" href="/jupyterblog/search/">Search</a><a class="page-link" href="/jupyterblog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">kalign3 as a library and colour printing</h1><p class="page-description">How the multiple sequence alignment kalign3 is implemented in the low-level phylogenetic library biomcmc-lib, and how to use colours in C.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-03-01T00:00:00-06:00" itemprop="datePublished">
+        Mar 1, 2022
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">Leo Martins</span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      8 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyterblog/categories/#C">C</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/leomrtns/jupyterblog/tree/master/_notebooks/2022-03-01-o4.kalign3.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/jupyterblog/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/leomrtns/jupyterblog/master?filepath=_notebooks%2F2022-03-01-o4.kalign3.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyterblog/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/leomrtns/jupyterblog/blob/master/_notebooks/2022-03-01-o4.kalign3.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/jupyterblog/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Fleomrtns%2Fjupyterblog%2Fblob%2Fmaster%2F_notebooks%2F2022-03-01-o4.kalign3.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/jupyterblog/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h1"><a href="#004-kalign-and-colour-printing">004 kalign and colour printing </a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#incorporating-kalign3-as-a-library">incorporating kalign3 as a library </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Autotools">Autotools </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Printing-colours">Printing colours </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-03-01-o4.kalign3.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="004-kalign-and-colour-printing">
+<a class="anchor" href="#004-kalign-and-colour-printing" aria-hidden="true"><span class="octicon octicon-link"></span></a>004 kalign and colour printing<a class="anchor-link" href="#004-kalign-and-colour-printing"> </a>
+</h1>
+<h2 id="incorporating-kalign3-as-a-library">
+<a class="anchor" href="#incorporating-kalign3-as-a-library" aria-hidden="true"><span class="octicon octicon-link"></span></a>incorporating kalign3 as a library<a class="anchor-link" href="#incorporating-kalign3-as-a-library"> </a>
+</h2>
+<p>This notebook uses the low-level phylogenetic library <a href="https://github.com/quadram-institute-bioscience/biomcmc-lib">biomcmc-lib</a> (commit <a href="https://github.com/quadram-institute-bioscience/biomcmc-lib/commit/5975331ef88d1c4ec9aef9599fb6348905d289c7">5975331</a>).</p>
+<p>Recently I (re-)discovered the <a href="https://github.com/TimoLassmann/kalign">kalign</a> software for multiple sequence alignment by Timo Lassmann, and was happily surprised with the code simplicity and a liberal license (GPL-3.0-or-later).</p>
+<p>Therefore I decided to incorporate its code into a library, that I can access using a <code>char_vector::</code> from the <code>biomcmc-lib</code> library. Currently I am working on a derived library/software called "cumaru" (still private), with a modified version of <code>kalign</code> algorithms.</p>
+<h3 id="Autotools">
+<a class="anchor" href="#Autotools" aria-hidden="true"><span class="octicon octicon-link"></span></a>Autotools<a class="anchor-link" href="#Autotools"> </a>
+</h3>
+<p>First, a digresssion on the configuration aspects of <code>cumaru</code> (or another software importing these libraries).</p>
+<p>This is needed by <code>configure.ac</code> as well as the described files, in order for <code>kalign3</code> to use the AVX extensions.</p>
+<div class="highlight"><pre><span></span><span class="c1"># M4 macros for checking of CPU features from kalign3</span>
+m4_include<span class="o">([</span>m4/ax_gcc_x86_avx_xgetbv.m4<span class="o">])</span>
+m4_include<span class="o">([</span>m4/ax_gcc_x86_cpuid.m4<span class="o">])</span>
+m4_include<span class="o">([</span>m4/ax_check_compile_flag.m4<span class="o">])</span>
+m4_include<span class="o">([</span>m4/ax_ext.m4<span class="o">])</span>
+m4_include<span class="o">([</span>m4/ax_openmp.m4<span class="o">])</span>
+AX_EXT
+</pre></div>
+<p>For importing <code>biomcmc-lib</code>, you have two options:</p>
+<ol>
+<li>downloading the (upstream) software through github, with option <code>--recursive</code> (default for final users of software). This will download <code>biomcmc-lib</code> into <code>${srcdir}/submodules/biomcmc-lib</code>.</li>
+<li>download <code>biomcmc-lib</code> independently into <code>${srcdir}/biomcmc-lib</code> or somewhere else and then link it to there. This is how I do it, since I use the same directory for several projects that rely on it. </li>
+</ol>
+<p>If you opted for (1) above (i.e. you just cloned the repository recursively), then the configuration option below will create a link as in option (2).</p>
+<div class="highlight"><pre><span></span>AC_CHECK_FILE<span class="o">([</span><span class="si">${</span><span class="nv">srcdir</span><span class="si">}</span>/biomcmc-lib<span class="o">]</span>,<span class="o">[]</span>,<span class="o">[</span>ln -s submodules/biomcmc-lib <span class="si">${</span><span class="nv">srcdir</span><span class="si">}</span>/biomcmc-lib<span class="o">])</span>
+AC_CHECK_FILE<span class="o">([</span><span class="si">${</span><span class="nv">srcdir</span><span class="si">}</span>/biomcmc-lib/configure.ac<span class="o">]</span>,<span class="o">[]</span>, <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span><span class="s2">"biomcmc-lib submodule missing, please git clone --recursive or link by hand to location of source code"</span><span class="o">])])</span>
+dnl Call biomcmc-lib ./configure script recursively.
+AC_CONFIG_SUBDIRS<span class="o">([</span>biomcmc-lib<span class="o">])</span>
+AC_SUBST<span class="o">([</span>BIOMCMCLIB<span class="o">]</span>, <span class="o">[</span>biomcmc-lib<span class="o">])</span>
+</pre></div>
+<p>Then the file <code>kalign/Makefile.am</code> has the following information, to create a static local library. This library will encapsulate <code>biomcmc-lib</code> and will be available to the main software as <code>libalign.la</code>:</p>
+<div class="highlight"><pre><span></span><span class="nv">AM_CPPFLAGS</span> <span class="o">=</span> <span class="k">$(</span>GTKDEPS_CFLAGS<span class="k">)</span>  -I<span class="k">$(</span>srcdir<span class="k">)</span>/../@BIOMCMCLIB@/lib  @OPENMP_CPPFLAGS@ @ZLIB_LIBS@
+<span class="nv">AM_CFLAGS</span> <span class="o">=</span> @SIMD_FLAGS@ @AM_CFLAGS@  @OPENMP_CFLAGS@
+<span class="nv">LDADD</span> <span class="o">=</span> <span class="k">$(</span>GTKDEPS_LIBS<span class="k">)</span> @ZLIB_LIBS@ ../biomcmc-lib/lib/libbiomcmc.la  <span class="k">$(</span>AM_LDFLAGS<span class="k">)</span>
+
+<span class="nv">common_headers</span> <span class="o">=</span> kalign.h <span class="se">\</span>
+tldevel.h rng.h global.h <span class="se">\</span>
+alignment_parameters.h <span class="se">\</span>
+bisectingKmeans.h <span class="se">\</span>
+sequence_distance.h <span class="se">\</span>
+alignment.h bpm.h
+
+<span class="nv">common_src</span> <span class="o">=</span> run_kalign.c <span class="se">\</span>
+tldevel.c rng.c <span class="se">\</span>
+alignment_parameters.c <span class="se">\</span>
+bisectingKmeans.c <span class="se">\</span>
+sequence_distance.c <span class="se">\</span>
+alignment.c bpm.c
+
+<span class="nv">noinst_LTLIBRARIES</span> <span class="o">=</span> libkalign.la   <span class="c1">## noinst_LT: linked statically (not installed globally)</span>
+<span class="nv">libkalign_la_SOURCES</span> <span class="o">=</span> config.h <span class="k">$(</span>common_headers<span class="k">)</span> <span class="k">$(</span>common_src<span class="k">)</span>
+</pre></div>
+<p>And the <code>src/Makefile.am</code> (with the final software) can be something like:</p>
+<div class="highlight"><pre><span></span><span class="nv">AM_CPPFLAGS</span> <span class="o">=</span> <span class="k">$(</span>GTKDEPS_CFLAGS<span class="k">)</span> -I<span class="k">$(</span>srcdir<span class="k">)</span>/../kalign -I<span class="k">$(</span>srcdir<span class="k">)</span>/../@BIOMCMCLIB@/lib @OPENMP_CPPFLAGS@  @ZLIB_LIBS@ 
+<span class="nv">AM_CFLAGS</span> <span class="o">=</span> @AM_CFLAGS@ @OPENMP_CFLAGS@ @CHECK_CFLAGS@
+<span class="nv">LDADD</span> <span class="o">=</span> <span class="k">$(</span>GTKDEPS_LIBS<span class="k">)</span> @CHECK_LIBS@  ../kalign/libkalign.la ../biomcmc-lib/lib/libbiomcmc.la @ZLIB_LIBS@  <span class="k">$(</span>AM_LDFLAGS<span class="k">)</span>
+
+<span class="nv">bin_PROGRAMS</span> <span class="o">=</span> cumaru 
+<span class="nv">cumaru_SOURCES</span> <span class="o">=</span> main.c kseq.h
+<span class="nv">cumaru_LDADD</span> <span class="o">=</span> <span class="k">$(</span>LDADD<span class="k">)</span>
+</pre></div>
+<p>Notice that we need to include the path to the local <code>biomcmc-lib</code> as well, since it is also statically linked.</p>
+<p>The code below performs multiple sequence alignment from hand-fed sequences (in practice, fasta reading usually come from <code>kseq.h</code>).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-c"><pre><span></span><span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/biomcmc-lib/lib</span>
+<span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build.191216/biomcmc-lib/lib</span>
+<span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/leomrtns.cumaru/kalign</span>
+<span class="c1">//%cflags: -I/usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build.191216/kalign</span>
+<span class="c1">//%cflags: /usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build.191216/kalign/.libs/libkalign.a</span>
+<span class="c1">//%cflags: /usr/users/QIB_fr005/deolivl/Academic/Quadram/009.supersptree/build.191216/biomcmc-lib/lib/.libs/libbiomcmc.a</span>
+<span class="c1">//%cflags:-lm</span>
+<span class="cp">#include</span> <span class="cpf">&lt;kalign.h&gt;</span><span class="cp"></span>
+
+<span class="kt">int</span>
+<span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+  <span class="kt">clock_t</span> <span class="n">time0</span><span class="p">,</span> <span class="n">time1</span><span class="p">;</span>
+  <span class="n">char_vector</span> <span class="n">seqname</span> <span class="o">=</span> <span class="n">new_char_vector</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">char_vector</span> <span class="n">dna</span> <span class="o">=</span> <span class="n">new_char_vector</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="n">char_vector</span> <span class="n">align</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+  <span class="n">time0</span> <span class="o">=</span> <span class="n">clock</span> <span class="p">();</span>
+
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">dna</span><span class="p">,</span> <span class="s">"ATCGAAAGAATTAGGCTTAAGCTAAAAGCTTATGACCACAGAGTTCTAGACCGTACAGAT"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">seqname</span><span class="p">,</span> <span class="s">"Campy"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">dna</span><span class="p">,</span> <span class="s">"AGAAAGAATTAGGCTTAAGCTAAGCTTATGACCACAGAGTTCTAGACCGTACAGTT"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">seqname</span><span class="p">,</span> <span class="s">"Vibrio"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">dna</span><span class="p">,</span> <span class="s">"ATGGAAAGAATTAGGCTTAAGCCGGAGCTTATGACCACAGAGTTCTAGAGCGTACAGTT"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">seqname</span><span class="p">,</span> <span class="s">"Strepto"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">dna</span><span class="p">,</span> <span class="s">"ATGGAAAGAATTAGGCTTAAGCTAAAAGCTTATGACTTCATTCTGTACAGTT"</span><span class="p">);</span>
+  <span class="n">char_vector_add_string</span> <span class="p">(</span><span class="n">seqname</span><span class="p">,</span> <span class="s">"Staph"</span><span class="p">);</span>
+
+  <span class="n">align</span> <span class="o">=</span> <span class="n">kalign3_from_char_vector</span> <span class="p">(</span><span class="n">dna</span><span class="p">);</span>
+  <span class="n">time1</span> <span class="o">=</span> <span class="n">clock</span> <span class="p">();</span> 
+  <span class="n">fprintf</span> <span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"finished in  %lf secs</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">time1</span><span class="o">-</span><span class="n">time0</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">CLOCKS_PER_SEC</span><span class="p">));</span> 
+  <span class="n">fflush</span><span class="p">(</span><span class="n">stderr</span><span class="p">);</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">align</span><span class="o">-&gt;</span><span class="n">nstrings</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="n">printf</span> <span class="p">(</span><span class="s">"&gt;%s</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">seqname</span><span class="o">-&gt;</span><span class="n">string</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">align</span><span class="o">-&gt;</span><span class="n">string</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+
+  <span class="n">del_char_vector</span> <span class="p">(</span><span class="n">dna</span><span class="p">);</span>
+  <span class="n">del_char_vector</span> <span class="p">(</span><span class="n">align</span><span class="p">);</span>
+  <span class="n">del_char_vector</span> <span class="p">(</span><span class="n">seqname</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>finished in  0.000583 secs
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&gt;Campy
+ATCGAAAGAATTAGGCTTAAGCTAAAAGCTTATGACCACAGAGTTCTAGACCGTACAGAT
+&gt;Vibrio
+AG--AAAGAATTAGGCTTAAGCTAA--GCTTATGACCACAGAGTTCTAGACCGTACAGTT
+&gt;Strepto
+ATGGAAAGAATTAGGCTTAAGCCGG-AGCTTATGACCACAGAGTTCTAGAGCGTACAGTT
+&gt;Staph
+ATGGAAAGAATTAGGCTTAAGCTAAAAGCTTATGACTTCA---TTCT-----GTACAGTT
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Printing-colours">
+<a class="anchor" href="#Printing-colours" aria-hidden="true"><span class="octicon octicon-link"></span></a>Printing colours<a class="anchor-link" href="#Printing-colours"> </a>
+</h2>
+<p>This week I've been refactoring the random and hash modules of <code>biomcmc-lib</code>. I am also adding user-friendly functionality — linux fortunes and coloured printing. Here we can see my test with colours in <code>printf()</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-c"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">mytext</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="s">"this has ` , $ percent \% and ' while"</span><span class="p">,</span> <span class="s">"so  \%d ____^H^H^H^Hmany"</span><span class="p">};</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="n">col_reset</span><span class="p">[]</span> <span class="o">=</span> <span class="s">"\e[0m"</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">rownames</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">"regular"</span><span class="p">,</span> <span class="s">"bold"</span><span class="p">,</span> <span class="s">"underline"</span><span class="p">,</span> <span class="s">"background"</span><span class="p">,</span> <span class="s">"highbckgrnd"</span><span class="p">,</span> <span class="s">"hightext"</span><span class="p">,</span> <span class="s">"boldhightxt"</span><span class="p">};</span>
+<span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">prt_col</span><span class="p">[][</span><span class="mi">8</span><span class="p">]</span><span class="o">=</span><span class="p">{</span> <span class="c1">// 0-black   1-red   2-grn   3-yel   4-blu   5-mag   6-cyn   7-white</span>
+   <span class="p">{</span><span class="s">"\e[0;30m"</span><span class="p">,</span>  <span class="s">"\e[0;31m"</span><span class="p">,</span>  <span class="s">"\e[0;32m"</span><span class="p">,</span>  <span class="s">"\e[0;33m"</span><span class="p">,</span>  <span class="s">"\e[0;34m"</span><span class="p">,</span>  <span class="s">"\e[0;35m"</span><span class="p">,</span>  <span class="s">"\e[0;36m"</span><span class="p">,</span>  <span class="s">"\e[0;37m"</span><span class="p">},</span>  <span class="c1">// 0 regular text</span>
+   <span class="p">{</span><span class="s">"\e[1;30m"</span><span class="p">,</span>  <span class="s">"\e[1;31m"</span><span class="p">,</span>  <span class="s">"\e[1;32m"</span><span class="p">,</span>  <span class="s">"\e[1;33m"</span><span class="p">,</span>  <span class="s">"\e[1;34m"</span><span class="p">,</span>  <span class="s">"\e[1;35m"</span><span class="p">,</span>  <span class="s">"\e[1;36m"</span><span class="p">,</span>  <span class="s">"\e[1;37m"</span><span class="p">},</span>  <span class="c1">// 1 regular bold text</span>
+   <span class="p">{</span><span class="s">"\e[4;30m"</span><span class="p">,</span>  <span class="s">"\e[4;31m"</span><span class="p">,</span>  <span class="s">"\e[4;32m"</span><span class="p">,</span>  <span class="s">"\e[4;33m"</span><span class="p">,</span>  <span class="s">"\e[4;34m"</span><span class="p">,</span>  <span class="s">"\e[4;35m"</span><span class="p">,</span>  <span class="s">"\e[4;36m"</span><span class="p">,</span>  <span class="s">"\e[4;37m"</span><span class="p">},</span>  <span class="c1">// 2 regular underline text</span>
+   <span class="p">{</span><span class="s">"\e[40m"</span><span class="p">,</span>    <span class="s">"\e[41m"</span><span class="p">,</span>    <span class="s">"\e[42m"</span><span class="p">,</span>    <span class="s">"\e[43m"</span><span class="p">,</span>    <span class="s">"\e[44m"</span><span class="p">,</span>    <span class="s">"\e[45m"</span><span class="p">,</span>    <span class="s">"\e[46m"</span><span class="p">,</span>    <span class="s">"\e[47m"</span><span class="p">},</span>    <span class="c1">// 3 regular background</span>
+   <span class="p">{</span><span class="s">"\e[0;100m"</span><span class="p">,</span> <span class="s">"\e[0;101m"</span><span class="p">,</span> <span class="s">"\e[0;102m"</span><span class="p">,</span> <span class="s">"\e[0;103m"</span><span class="p">,</span> <span class="s">"\e[0;104m"</span><span class="p">,</span> <span class="s">"\e[0;105m"</span><span class="p">,</span> <span class="s">"\e[0;106m"</span><span class="p">,</span> <span class="s">"\e[0;107m"</span><span class="p">},</span> <span class="c1">// 4 high intensity underground</span>
+   <span class="p">{</span><span class="s">"\e[0;90m"</span><span class="p">,</span>  <span class="s">"\e[0;91m"</span><span class="p">,</span>  <span class="s">"\e[0;92m"</span><span class="p">,</span>  <span class="s">"\e[0;93m"</span><span class="p">,</span>  <span class="s">"\e[0;94m"</span><span class="p">,</span>  <span class="s">"\e[0;95m"</span><span class="p">,</span>  <span class="s">"\e[0;96m"</span><span class="p">,</span>  <span class="s">"\e[0;97m"</span><span class="p">},</span>  <span class="c1">// 5 high intensity text </span>
+   <span class="p">{</span><span class="s">"\e[1;90m"</span><span class="p">,</span>  <span class="s">"\e[1;91m"</span><span class="p">,</span>  <span class="s">"\e[1;92m"</span><span class="p">,</span>  <span class="s">"\e[1;93m"</span><span class="p">,</span>  <span class="s">"\e[1;94m"</span><span class="p">,</span>  <span class="s">"\e[1;95m"</span><span class="p">,</span>  <span class="s">"\e[1;96m"</span><span class="p">,</span>  <span class="s">"\e[1;97m"</span><span class="p">}</span>   <span class="c1">// 6 bold high intensity text</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="mi">8</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span> <span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">%d</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="n">printf</span> <span class="p">(</span><span class="s">"%15s : %s&gt;%s&lt;&gt;%s&lt;%s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="n">rownames</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">prt_col</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">],</span><span class="n">mytext</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mytext</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">col_reset</span><span class="p">);</span>
+    <span class="p">};</span>
+    <span class="c1">// test with marsaglia constants (should print prime numbers)</span>
+    <span class="n">printf</span> <span class="p">(</span><span class="s">"%5d %5d %5d"</span><span class="p">,</span> <span class="p">(</span><span class="mi">18000</span><span class="o">&lt;&lt;</span><span class="mi">16</span><span class="p">)</span><span class="mi">-1</span><span class="p">,</span> <span class="p">(</span><span class="mi">18000</span><span class="o">&lt;&lt;</span><span class="mi">15</span><span class="p">)</span><span class="mi">-1</span><span class="p">,</span> <span class="p">(</span><span class="mi">18030</span><span class="o">&lt;&lt;</span><span class="mi">16</span><span class="p">)</span><span class="mi">-1</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+0
+        regular : <span class="ansi-black-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-black-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-black-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-black-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-black-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-black-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-black-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+1
+        regular : <span class="ansi-red-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-red-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-red-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-red-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-red-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-red-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-red-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+2
+        regular : <span class="ansi-green-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-green-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-green-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-green-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-green-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-green-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-green-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+3
+        regular : <span class="ansi-yellow-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-yellow-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-yellow-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-yellow-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-yellow-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-yellow-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-yellow-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+4
+        regular : <span class="ansi-blue-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-blue-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-blue-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-blue-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-blue-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-blue-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-blue-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+5
+        regular : <span class="ansi-magenta-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-magenta-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-magenta-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-magenta-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-magenta-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-magenta-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-magenta-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+6
+        regular : <span class="ansi-cyan-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-cyan-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-cyan-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-cyan-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-cyan-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-cyan-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-cyan-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+
+7
+        regular : <span class="ansi-white-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+           bold : <span class="ansi-white-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+      underline : <span class="ansi-white-fg ansi-underline">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+     background : <span class="ansi-white-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    highbckgrnd : <span class="ansi-white-intense-bg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+       hightext : <span class="ansi-white-intense-fg">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+    boldhightxt : <span class="ansi-white-intense-fg ansi-bold">&gt;this has ` , $ percent % and ' while&lt;&gt;so  %d ____^H^H^H^Hmany&lt;</span>
+1179647999 589823999 1181614079</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>And this is the same output in my terminal (black background):
+<figure>
+  
+    <img class="docimage" src="/jupyterblog/images/copied_from_nb/note_images/191213.colourprint.png" alt="" style="max-width: 500px">
+    
+    
+</figure>
+</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="leomrtns/jupyterblog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/jupyterblog/c/2022/03/01/o4.kalign3.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyterblog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyterblog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyterblog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Notes on Evolutionary Computational Biology and Bioinformatics</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
