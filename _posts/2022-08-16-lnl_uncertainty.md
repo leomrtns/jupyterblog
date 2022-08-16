@@ -84,4 +84,4 @@ Notice that all trees are identical for `alignment*.aln` since we fix the tree a
 
 So it boils down to the amount of gaps and uncertainty in our data set: on one extreme, we can assume that all constant sites which were removed were *bona fide* ACGT only; on the other hand the removal of "constant" sites lumped into the same category truly invariant sites with regions of high uncertainty. In the former case, we don't need to remove them since most software (BEAST, IQTREE, RaxML) can easily merge constant sites into a few patterns with no detriment of speed. In the latter case, the patterns of gaps and ambiguous bases within an alignment column can inform the model and branch lengths and thus should not be removed. (Notice that in this case the speed will suffer more since every pattern of Ns and indels must be calculated separately). 
 
-All files and script used are available [as an XZ compressed tar file](/assets/20220816.blogentry.txz).
+All files and script used are available [as an XZ compressed tar file]({{site.baseurl}}/assets/20220816.blogentry.txz).
