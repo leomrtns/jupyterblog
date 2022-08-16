@@ -119,14 +119,7 @@ window.onload = wrap_img;
 
 <p>Removing constant sites biases your data set towards fast-evolving sites, thus the name ASC (“ascertainment bias” is a type of selection bias). The obvious effect is that all estimated branch lengths will be very large, since they are given in substitutions per site and at least one of the sequences has a SNP at a given position. For instance, if you have two genomes of 1000bp but only 10 sites are polymorphic (i.e. SNPs, the other 900 are identical on both sequences), then their distance is 1/100 substitutions per site; however if you only look at the 10 SNPs then their distance is 1 substitution per site!</p>
 
-<table>
-  <tbody>
-    <tr>
-      <td>When you have several sequences and a tree it gets more complicated since maximum likelihood methods like IQTREE2 estimate the instantaneous rate matrix — from the HKY model, for instance. Which describes the probability of A becoming a C etc. and it must take into account the many constant sites in order to have a good estimate of the Prob(A-&gt;A) and so forth. If there are no constant sites the rate matrix will inflate Prob(A-&gt;C) and collapse Prob(A-&gt;A) and thus branch lengths will be inflated in a non-linear way for most models (otherwise we could just correct by dividing branch lengths by an amount, like 100 in example above). The topology may also be affected. The bias correction  is done by replacing the unconditional probabilities Prob(A-&gt;C) by conditional ones Prob(A-&gt;C</td>
-      <td>“given that” all constant sites were removed).</td>
-    </tr>
-  </tbody>
-</table>
+<p>When you have several sequences and a tree it gets more complicated since maximum likelihood methods like IQTREE2 estimate the instantaneous rate matrix — from the HKY model, for instance. Which describes the probability of A becoming a C etc. and it must take into account the many constant sites in order to have a good estimate of the Prob(A-&gt;A) and so forth. If there are no constant sites the rate matrix will inflate Prob(A-&gt;C) and collapse Prob(A-&gt;A) and thus branch lengths will be inflated in a non-linear way for most models (otherwise we could just correct by dividing branch lengths by an amount, like 100 in example above). The topology may also be affected. The bias correction  is done by replacing the unconditional probabilities Prob(A-&gt;C) by conditional ones Prob(A-&gt;C “given that” all constant sites were removed).</p>
 
 <h2 id="removing-invariant-sites-and-telling-the-tree-inference-program-about-it">Removing invariant sites and telling the tree inference program about it</h2>
 
