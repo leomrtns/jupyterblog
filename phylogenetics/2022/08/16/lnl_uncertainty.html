@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Not all invariant sites are created the same | Leo Martins Binfie Notes</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Not all invariant sites are created the same" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Why removing invariant sites is usually a bad idea for maximum likelihood tree inference" />
+<meta property="og:description" content="Why removing invariant sites is usually a bad idea for maximum likelihood tree inference" />
+<link rel="canonical" href="https://leomrtns.github.io/jupyterblog/phylogenetics/2022/08/16/lnl_uncertainty.html" />
+<meta property="og:url" content="https://leomrtns.github.io/jupyterblog/phylogenetics/2022/08/16/lnl_uncertainty.html" />
+<meta property="og:site_name" content="Leo Martins Binfie Notes" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-08-16T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Not all invariant sites are created the same" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-08-16T00:00:00-05:00","datePublished":"2022-08-16T00:00:00-05:00","description":"Why removing invariant sites is usually a bad idea for maximum likelihood tree inference","headline":"Not all invariant sites are created the same","mainEntityOfPage":{"@type":"WebPage","@id":"https://leomrtns.github.io/jupyterblog/phylogenetics/2022/08/16/lnl_uncertainty.html"},"url":"https://leomrtns.github.io/jupyterblog/phylogenetics/2022/08/16/lnl_uncertainty.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/jupyterblog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://leomrtns.github.io/jupyterblog/feed.xml" title="Leo Martins Binfie Notes" /><link rel="shortcut icon" type="image/x-icon" href="/jupyterblog/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/jupyterblog/">Leo Martins Binfie Notes</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/jupyterblog/about/">About</a><a class="page-link" href="/jupyterblog/licence/">Licence</a><a class="page-link" href="/jupyterblog/search/">Search</a><a class="page-link" href="/jupyterblog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Not all invariant sites are created the same</h1><p class="page-description">Why removing invariant sites is usually a bad idea for maximum likelihood tree inference</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-08-16T00:00:00-05:00" itemprop="datePublished">
+        Aug 16, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/jupyterblog/categories/#phylogenetics">phylogenetics</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>A while back we had an <a href="https://bitsandbugs.org/2019/11/06/two-easy-ways-to-run-iq-tree-with-the-correct-number-of-constant-sites/">interesting discussion regarding the exclusion of invariant sites in maximum likelihood phylogenetic inference</a>. Since this discussion usually comes up again and again, I would like to add a bit of context.</p>
+
+<p>First, I understand that there are situations where it is unavoidable to exclude “uninteresting” sites to speed up calculations, and in many practical situations we expect the results to be unchanged. In these cases, and listening to the justification for it, I wonder why using a slower likelihood method instead of a much faster distance-based method. But that’s a different story.</p>
+
+<p>So, in a nutshell, the problem lies when we have a large alignment where most of the sites (columns in the alignment) are constant, i.e. there is no polymorphism (SNPs) and thus we assume they do not affect the tree estimation. Their removal should not affect the topology, but the branch lengths are indeed affected by the number of constant sites.</p>
+
+<p>Removing constant sites biases your data set towards fast-evolving sites, thus the name ASC (“ascertainment bias” is a type of selection bias). The obvious effect is that all estimated branch lengths will be very large, since they are given in substitutions per site and at least one of the sequences has a SNP at a given position. For instance, if you have two genomes of 1000bp but only 10 sites are polymorphic (i.e. SNPs, the other 900 are identical on both sequences), then their distance is 1/100 substitutions per site; however if you only look at the 10 SNPs then their distance is 1 substitution per site!</p>
+
+<p>When you have several sequences and a tree it gets more complicated since maximum likelihood methods like IQTREE2 estimate the instantaneous rate matrix — from the HKY model, for instance. Which describes the probability of A becoming a C etc. and it must take into account the many constant sites in order to have a good estimate of the Prob(A-&gt;A) and so forth. If there are no constant sites the rate matrix will inflate Prob(A-&gt;C) and collapse Prob(A-&gt;A) and thus branch lengths will be inflated in a non-linear way for most models (otherwise we could just correct by dividing branch lengths by an amount, like 100 in example above). The topology may also be affected. The bias correction  is done by replacing the unconditional probabilities Prob(A-&gt;C) by conditional ones Prob(A-&gt;C/all constant sites were removed).</p>
+
+<h2 id="removing-invariant-sites-and-telling-the-tree-inference-program-about-it">Removing invariant sites and telling the tree inference program about it</h2>
+
+<p>One solution for this problem is to calculate how many (constant) sites you are excluding and then adding this information to the phylogenetic inference software (the link above contains instructions on how to to this with IQTREE2; the same can be done for BEAST or RaxML).</p>
+
+<p>We may be tempted to use an explicit “ascertainment bias correction” model, but we have to be careful since the ASC method implemented in iqtree2 assumes that we do not know how many constant sites we are excluding (see https://www.biorxiv.org/content/10.1101/186478v1, and the “Leaché 2015” reference therein for details). Which is true for morphological data, but not in general for genomes, since we can count (<code class="language-plaintext highlighter-rouge">snp-sites -C</code>) the constant sites we are excluding. Therefore we have more precise estimation by informing iqtree2 the number of excluded sites (the option “-fconst”) as discussed in the link above
+(https://bitsandbugs.org/2019/11/06/two-easy-ways-to-run-iq-tree-with-the-correct-number-of-constant-sites/). Notice that “-fconst” creates artificial columns in the alignment with the constant sites, and therefore is not compatible with “+ASC”. That is, if you call iqtree with both  “+ASC” and “-fconst” then ASC will complain that there are constant sites in the alignment (which were added by “-fconst”!)</p>
+
+<p>RaxML handles more ASC models: https://github.com/amkozlov/raxml-ng/wiki/Input-data#evolutionary-model , where the “STAM” model is equiv to “-fconst” and the “LEWIS” model is equiv to “+ASC” in iqtree2.</p>
+
+<h2 id="sometimes-its-better-not-to-do-anything">Sometimes it’s better not to do anything</h2>
+
+<p>My suggestion in the discussion linked above and in general, is to leave the original data as is without trying to remove sites and correcting later. This is because if the sites are “truly” invariant then they won’t add to the computational time (as explained by Alexis Stamatakis in https://groups.google.com/g/raxml/c/JuwXlf576Sw for instance). This is also what IQTREE2 does, as mentioned above: it adds four artificial columns to the alignment weighted by their counts. This is because most likelihood algorithms compress the alignments into distinct “patterns”, weighted by how many times we see them in the alignment.</p>
+
+<p>There is an important difference, however, which is the inclusion of gaps and Ns in the “invariant” sites. For instance, take the following alignments (one line per sequence, spaces to ease visualisation):</p>
+
+<div class="language-config highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">alignment</span> <span class="m">1</span>
+&gt;<span class="n">seq1</span> <span class="n">NNNNCCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CTTCCAAAAA</span>
+&gt;<span class="n">seq2</span> <span class="n">NNNNCCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CCCTTATAAA</span>
+&gt;<span class="n">seq3</span> ----<span class="n">CCTCCC</span> <span class="n">CGGTTCCTTG</span> <span class="n">GCCTTAACAA</span>
+&gt;<span class="n">seq4</span> ----<span class="n">CCTCCC</span> <span class="n">CGGAAGGTTG</span> <span class="n">GCCTTAAAGA</span>
+&gt;<span class="n">seq5</span> ----<span class="n">CCTCCT</span> <span class="n">TTTAAGGTTG</span> <span class="n">GCCTTAAAAT</span>
+
+<span class="n">alignment</span> <span class="m">2</span>
+&gt;<span class="n">seq1</span> <span class="n">AAAACCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CTTCCAAAAA</span>
+&gt;<span class="n">seq2</span> <span class="n">NNNNCCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CCCTTATAAA</span>
+&gt;<span class="n">seq3</span> ----<span class="n">CCTCCC</span> <span class="n">CGGTTCCTTG</span> <span class="n">GCCTTAACAA</span>
+&gt;<span class="n">seq4</span> ----<span class="n">CCTCCC</span> <span class="n">CGGAAGGTTG</span> <span class="n">GCCTTAAAGA</span>
+&gt;<span class="n">seq5</span> ----<span class="n">CCTCCT</span> <span class="n">TTTAAGGTTG</span> <span class="n">GCCTTAAAAT</span>
+
+<span class="n">alignment</span> <span class="m">3</span> 
+&gt;<span class="n">seq1</span> <span class="n">NNNNCCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CTTCCAAAAA</span>
+&gt;<span class="n">seq2</span> <span class="n">AAAACCTCCC</span> <span class="n">CGGTTCCAAC</span> <span class="n">CCCTTATAAA</span>
+&gt;<span class="n">seq3</span> <span class="n">AAAACCTCCC</span> <span class="n">CGGTTCCTTG</span> <span class="n">GCCTTAACAA</span>
+&gt;<span class="n">seq4</span> ----<span class="n">CCTCCC</span> <span class="n">CGGAAGGTTG</span> <span class="n">GCCTTAAAGA</span>
+&gt;<span class="n">seq5</span> ----<span class="n">CCTCCT</span> <span class="n">TTTAAGGTTG</span> <span class="n">GCCTTAAAAT</span>
+</code></pre></div></div>
+
+<p>The only difference between the alignments are the first four sites: in alignment 1 we only have gaps and Ns. In alignments 2 and 3 we have <code class="language-plaintext highlighter-rouge">AAAA</code> in a few samples, instead. 
+<strong>All 3 alignments are identical after removal of constant sites</strong> with <code class="language-plaintext highlighter-rouge">snp-sites</code>, since the first four sites do not have SNPs! Which is what I meant in the discussion linked above when I said</p>
+
+<blockquote>
+  <p>One thing to consider is that a column composed of “AAAA” is distinct from one composed of “AANN” or “AA-A”, although all 3 of them will be removed by snp-sites -c.</p>
+</blockquote>
+
+<p>If we fix the topology and the branch lengths (<code class="language-plaintext highlighter-rouge">iqtree2 -s ${file}.aln -te fixed.tre -blfix -m JC</code>) then the log-likelihood of the three alignments will be -115.559 for alignment 1, -121.104 for alignment 2, and 
+-122.123 for alignment 3. So the likelihood is different for the three alignments (I’m using the Jukes-Cantor model to avoid handling extra parameters). Using <code class="language-plaintext highlighter-rouge">snp-sites</code> to remove the invariant sites and to count the frequencies would not fix the problem since alignments 2 and 3 have the same number of “invariant sites”: <code class="language-plaintext highlighter-rouge">5,4,0,1</code>. To make a long story short, I ran the 3 alignments under a fixed tree (topology and branch lengths) as above and asking IQTREE2 to optimise the branch lengths (<code class="language-plaintext highlighter-rouge">iqtree2 -s ${i} -te fixed.tre --prefix ${i%aln}best_length -m JC</code>). I also used only the constant sites with the <code class="language-plaintext highlighter-rouge">snp-sites</code> correction, as in</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>snp-sites <span class="nt">-c</span> <span class="nv">$i</span> <span class="o">&gt;</span> <span class="k">${</span><span class="nv">i</span><span class="p">%aln</span><span class="k">}</span>snpsites
+iqtree2 <span class="nt">-fconst</span> <span class="si">$(</span>snp-sites <span class="nt">-C</span> <span class="k">${</span><span class="nv">i</span><span class="k">}</span><span class="si">)</span> <span class="nt">-s</span> <span class="k">${</span><span class="nv">i</span><span class="p">%aln</span><span class="k">}</span>snpsites <span class="nt">-m</span> JC <span class="nt">--prefix</span> <span class="k">${</span><span class="nv">i</span><span class="p">%aln</span><span class="k">}</span>const
+</code></pre></div></div>
+<p>We have the results as below, where we can see that not only the likelihoods, but the tree branch lenghts are different:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>iqtree file</th>
+      <th>log-likelihood</th>
+      <th>ML tree</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>alignment1.aln</td>
+      <td>-115.559</td>
+      <td>(seq1:0.1886473604,seq2:0.0303274053,(seq3:0.0284331913,(seq4:0.0258689619,seq5:0.2463693196):0.2138883204):0.2087029810);</td>
+    </tr>
+    <tr>
+      <td>alignment1.best_length</td>
+      <td>-115.559</td>
+      <td>(seq1:0.1886473604,seq2:0.0303274053,(seq3:0.0284331913,(seq4:0.0258689619,seq5:0.2463693196):0.2138883204):0.2087029810);</td>
+    </tr>
+    <tr>
+      <td>alignment1.const</td>
+      <td>-115.559</td>
+      <td>(seq1:0.1886475517,seq2:0.0303274177,(seq3:0.0284339867,(seq4:0.0258696236,seq5:0.2463695763):0.2138875505):0.2087022795);</td>
+    </tr>
+    <tr>
+      <td>alignment2.aln</td>
+      <td>-121.104</td>
+      <td>(seq1:0.1886473604,seq2:0.0303274053,(seq3:0.0284331913,(seq4:0.0258689619,seq5:0.2463693196):0.2138883204):0.2087029810);</td>
+    </tr>
+    <tr>
+      <td>alignment2.best_length</td>
+      <td>-121.104</td>
+      <td>(seq1:0.1886473604,seq2:0.0303274053,(seq3:0.0284331913,(seq4:0.0258689619,seq5:0.2463693196):0.2138883204):0.2087029810);</td>
+    </tr>
+    <tr>
+      <td>alignment2.const</td>
+      <td>-124.433</td>
+      <td>(seq1:0.1577276882,seq2:0.0281664193,(seq3:0.0272139809,(seq4:0.0254304079,seq5:0.2041776675):0.1736347105):0.1705027642);</td>
+    </tr>
+    <tr>
+      <td>alignment3.aln</td>
+      <td>-122.123</td>
+      <td>(seq1:0.1886473604,seq2:0.0303274053,(seq3:0.0284331913,(seq4:0.0258689619,seq5:0.2463693196):0.2138883204):0.2087029810);</td>
+    </tr>
+    <tr>
+      <td>alignment3.best_length</td>
+      <td>-122.045</td>
+      <td>(seq1:0.1888748916,seq2:0.0261918048,(seq3:0.0246320132,(seq4:0.0257728057,seq5:0.2464608488):0.2140593199):0.1757918053);</td>
+    </tr>
+    <tr>
+      <td>alignment3.const</td>
+      <td>-124.433</td>
+      <td>(seq1:0.1577274163,seq2:0.0281664193,(seq3:0.0272140466,(seq4:0.0254297568,seq5:0.2041783024):0.1736349260):0.1705029865);</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>All files and script used are available [as an XZ compressed tar file]](assets/20220816.blogentry.txz).</p>
+
+  </div><a class="u-url" href="/jupyterblog/phylogenetics/2022/08/16/lnl_uncertainty.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/jupyterblog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/jupyterblog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/jupyterblog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Notes on Evolutionary Computational Biology and Bioinformatics</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://scicomm.xyz/@leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#mastodon"></use></svg></a></li><li><a rel="me" href="https://twitter.com/leomrtns" target="_blank" title="leomrtns"><svg class="svg-icon grey"><use xlink:href="/jupyterblog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
