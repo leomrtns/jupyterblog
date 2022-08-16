@@ -320,8 +320,9 @@ alignment B than alignment A.
 What I usually do is to first estimate the tree with SNPs only, and then use this tree as an initial (or fixed) topology
 for the whole data set, where branch lengths and model parameters can be optimised.
 This is because the SNPs are good enough for estimating the topology —tree branching, without branch lengths— , which is
-the most time-consuming part.
-I also avoid at all costs using the standard generation of parsimony trees in IQTREE, since it does not use the site
+the most time-consuming part.</p>
+
+<p>I also avoid at all costs using the standard generation of parsimony trees in IQTREE, since it does not use the site
 patterns (<a href="https://groups.google.com/g/iqtree/c/vjyLDpc1e1Q/m/68svHwSMAQAJ">https://groups.google.com/g/iqtree/c/vjyLDpc1e1Q/m/68svHwSMAQAJ</a>) 
 and can be extremely slow.
 Another approach might be to remove sites which look constant (i.e. no SNPs) and with high levels of uncertainty/gaps.
