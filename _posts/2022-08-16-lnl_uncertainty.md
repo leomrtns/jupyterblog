@@ -173,6 +173,7 @@ What I usually do is to first estimate the tree with SNPs only, and then use thi
 for the whole data set, where branch lengths and model parameters can be optimised.
 This is because the SNPs are good enough for estimating the topology &mdash;tree branching, without branch lengths&mdash; , which is
 the most time-consuming part.
+
 I also avoid at all costs using the standard generation of parsimony trees in IQTREE, since it does not use the site
 patterns ([https://groups.google.com/g/iqtree/c/vjyLDpc1e1Q/m/68svHwSMAQAJ](https://groups.google.com/g/iqtree/c/vjyLDpc1e1Q/m/68svHwSMAQAJ)) 
 and can be extremely slow.
