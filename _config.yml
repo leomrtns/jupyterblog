@@ -39,8 +39,9 @@ baseurl: "/jupyterblog" # the subpath of your site, e.g. "/blog".
 # Github and twitter are optional:
 minima:
   social_links:
-    twitter: leomrtns
+#    twitter: leomrtns
     github: leomrtns
+    bluesky: leomrtns.bsky.social
     mastodon:
     - username: leomrtns
       instance: scicomm.xyz
